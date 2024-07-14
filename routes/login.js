@@ -27,5 +27,7 @@ const router = Router()
 router.post('/login', loginController.login)
 router.post('/register', loginController.register)
 router.put('/approve/:id', verifyToken, loginController.approve)
+router.get('/identify', verifyToken, loginController.identify)
+router.get('/usersApprv', verifyToken, loginController.getAllUsers)
 
 module.exports = router

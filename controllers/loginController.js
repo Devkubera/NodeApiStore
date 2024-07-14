@@ -16,7 +16,7 @@ exports.login = async (req, res) => {
         const result = await UserModel.findOne({ username: username })
         // check account
         if (!result) {
-            return Response(res, 'Not found user.', 401)
+            return Response(res, 'Not found user. Please register before login.', 400)
         }
         // compare password
         const isPwdCorrect = await bcrypt.compare(password, result.password)
@@ -39,7 +39,8 @@ exports.login = async (req, res) => {
         return Response(res, 'Login success.', 200, {
             _id: result._id,
             username: username,
-            token: token
+            token: token,
+            role: result.role
         })
     } catch (error) {
         console.error('login failed: ', error)
@@ -56,7 +57,7 @@ exports.register = async (req, res) => {
         }
         // check account is already exits?
         if (await UserModel.findOne({ username: username })) {
-            return Response(res, 'Username is already exits.', 400)
+            return Response(res, 'Username is already exits. Please try another username.', 400)
         }
         // await every time when you do something that might TAKE A TIME !!!!!!!!!!!!!!!
         const hash = await bcrypt.hash(password, 10)
@@ -69,7 +70,7 @@ exports.register = async (req, res) => {
         const result = await newUser.save()
 
         if (result) {
-            return Response(res, 'Register Success.', 200, {
+            return Response(res, 'Register Success.', 201, {
                 _id: result._id,
                 username: result.username,
                 role: result.role
@@ -86,7 +87,7 @@ exports.approve = async (req, res) => {
     try {
         const { id } = req.params
         const { role } = req.auth
-        
+
         if (role !== 'admin') {
             return Response(res, 'Please contact admin to verify.', 400)
         }
@@ -104,6 +105,44 @@ exports.approve = async (req, res) => {
 
     } catch (error) {
         console.error('Approve Failed: ', error)
+        return Response(res, 'Internal Server Error', 500)
+    }
+}
+
+exports.identify = async (req, res) => {
+    try {
+        const { _id, token } = req.auth
+        console.log('token: ', req.auth)
+        const user = await UserModel.findById({ _id: _id })
+        // console.log('res: ', user)
+        const data = {
+            username: user.username,
+            _id: user._id,
+            role: user.role
+        }
+        return Response(res, 'Identify pass.', 200, data)
+    } catch (error) {
+        console.error('Identify Failed: ', error)
+        return Response(res, 'Internal Server Error', 500)
+    }
+}
+
+exports.getAllUsers = async (req, res) => {
+    try {
+        const { _id, token } = req.auth
+        console.log('token: ', req.auth)
+        const result = await UserModel.find()
+        const users = []
+        result.forEach((user) => {
+            if (user.role !== 'admin') {
+                users.push({ _id: user._id, username: user.username, role: user.role, isApprove: user.isApprove })
+            }
+        })
+        // console.log('result: ', res)
+        // console.log('result to fetch approve list: ', users)
+        return Response(res, 'Fetch approve list success!', 200, users)
+    } catch (error) {
+        console.error('Get Approve List Failed: ', error)
         return Response(res, 'Internal Server Error', 500)
     }
 }

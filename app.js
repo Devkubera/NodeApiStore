@@ -1,5 +1,6 @@
 const express = require('express')
 const logger = require('morgan')
+const cors = require('cors')
 var cookieParser = require('cookie-parser');
 require('dotenv').config()
 require('./db')
@@ -16,6 +17,7 @@ app.use(logger('dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(cors())
 // use for serve any file to show result when routing such as HTML file etc.
 // app.use(express.static(path.join(__dirname, 'public')));
 
